@@ -1,0 +1,13 @@
+{
+  "id": "__PLUGIN_ID__",
+  "name": "__PLUGIN_NAME__",
+  "author": "",
+  "version": "0.1.0",
+  "contract": 1,
+  "types": ["metadata"],
+  "domain": "__PLUGIN_ID__",
+  "series": true,
+  "main": "index.js",
+  "webui": "ui/index.html",
+  "description": ""
+}

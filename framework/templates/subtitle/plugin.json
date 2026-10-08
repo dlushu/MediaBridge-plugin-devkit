@@ -1,0 +1,10 @@
+{
+  "id": "__PLUGIN_ID__",
+  "name": "__PLUGIN_NAME__",
+  "author": "",
+  "version": "0.1.0",
+  "contract": 1,
+  "types": ["subtitle"],
+  "main": "index.js",
+  "description": ""
+}
