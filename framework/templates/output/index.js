@@ -2,11 +2,11 @@
 /**
  * __PLUGIN_NAME__ —— 输出插件骨架。
  *
- * 契约见 framework/contracts/plugin-contract.md 第四节「输出插件」：
+ * 契约见 framework/contracts/contract-output.md：
  * 不占端口、不接 Emby —— 它是"外部能匿名/持票访问的 HTTP 面 + 一组 hostCall 编排"。
  * 典型产物：给外部播放器下发的脚本/配置，经 hostCall 取首页/搜索/详情/播放。
  *
- * hostCall 白名单（契约第四节）：home.plugins / home.rows / home.run /
+ * hostCall 白名单（见 contract-output.md）：home.plugins / home.rows / home.run /
  * agg.sites / agg.search / agg.detail / agg.play。白名单之外一律 NO_HOSTCALL。
  * hostCall 失败码如实映射成 HTTP 状态：BAD_INPUT/NO_DOMAIN/NO_SITE/NO_SOURCE → 400，
  * TIMEOUT → 504，其余 → 502。
@@ -16,7 +16,7 @@
 
 const actions = {
   /**
-   * 对外 HTTP 面：外部请求经面板转发进来（契约第十二节）。
+   * 对外 HTTP 面：外部请求经面板转发进来（总契约第九节）。
    * 入参 { method, path, query, body, contentType, host, proto }；
    * host/proto 用来拼自描述地址（这次外部请求实际打到的地址）。
    */

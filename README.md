@@ -18,9 +18,12 @@ VERSION                            # 框架版本（更新提醒的比对对象�
 framework/
   framework.json                   # 元信息：版本号 + 来源戳
   contracts/                       # 插件契约（依据，开发前必读）
-    plugin-contract.md             # 插件总契约：动作、通道、鉴权、打包
-    source-display-rules.md        # 源插件显示与定位规范
-    emby-home-plugin.md            # 首页插件行与条目规范
+    plugin-contract.md             # 插件总契约：通用模型（包、通道、动作、缓存、webui）
+    contract-source.md             # 源插件契约（动作 + 显示与定位口径）
+    contract-metadata.md           # 元数据插件契约
+    contract-home.md               # 首页插件契约（行与条目规范）
+    contract-subtitle.md           # 字幕插件契约
+    contract-output.md             # 输出插件契约
     plugin-webui.md                # 插件 webui 前端契约（SDK、通道前缀、门禁）
   tools/
     contract.js                    # 声明文件校验（面板 contract.js 的子集副本）

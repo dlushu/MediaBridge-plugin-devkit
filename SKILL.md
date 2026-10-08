@@ -7,17 +7,17 @@ description: 开发 MediaBridge 插件（源/元数据/首页/字幕/输出）�
 
 这是**给开发 MediaBridge 插件的人**用的 skill。你的项目里应该有这个 skill + `framework/` 框架；如果没有，先初始化。
 
-## 开工前必读（按插件类型选读对应节）
+## 契约索引（按类型选读）
 
-| 类型 | 必读 |
+| 你要做什么 | 必读 |
 |---|---|
-| **所有插件** | [插件总契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-contract.md) —— 动作、通道、鉴权、打包 |
-| 源插件（`source`） | 上面那份 + [源插件显示与定位规范](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/source-display-rules.md) |
-| 首页插件（`home`） | 上面那份 + [首页插件行与条目规范](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/emby-home-plugin.md) |
-| 元数据插件（`metadata`） | 总契约第六节 |
-| 字幕插件（`subtitle`） | 总契约第七节 |
-| 输出插件（`output`） | 总契约第四节「输出插件」 |
-| 带 webui 的 | [插件 webui 前端契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md) |
+| **所有插件** | [插件总契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-contract.md) —— 通用模型：包、通道、动作、执行、缓存、webui、失败口径 |
+| 源插件（`source`） | [源插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-source.md) —— 动作清单、组/站点模型、显示与定位口径 |
+| 元数据插件（`metadata`） | [元数据插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-metadata.md) —— 注册、取元数据、取分集、搜索 |
+| 首页插件（`home`） | [首页插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-home.md) —— 行与条目规范、与 Emby 端点接线 |
+| 字幕插件（`subtitle`） | [字幕插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-subtitle.md) —— 申报轨、取内容、ref 与缓存 |
+| 输出插件（`output`） | [输出插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-output.md) —— 反向 hostCall、HTTP 编排、令牌安全 |
+| 带 webui 的 | [插件 webui 前端契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md) —— SDK、通道前缀、门禁 |
 
 **契约版本**：插件在 `plugin.json` 写 `contract: 1`；契约不兼容变更会升号，面板据此区分新旧。
 

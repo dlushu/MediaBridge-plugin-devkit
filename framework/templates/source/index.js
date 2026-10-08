@@ -2,16 +2,15 @@
 /**
  * __PLUGIN_NAME__ —— 源插件骨架。
  *
- * 动作契约见 framework/contracts/plugin-contract.md 第五节；
- * 显示与定位的硬性口径（组/站点命名、候选清洗、季集定位、版本标签）见
- * framework/contracts/source-display-rules.md —— 每一条都踩过坑，先读再写。
+ * 契约见 framework/contracts/contract-source.md（动作总表 + 显示与定位口径）——
+ * 每一条都踩过坑，先读再写。通用模型见同目录 plugin-contract.md。
  *
- * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（契约第四节）。
+ * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（总契约第四节）。
  */
 const fs = require('fs');
 const path = require('path');
 
-/* 设置：声明归插件、存储也归插件（自己的 data/ 目录，契约第十二节） */
+/* 设置：声明归插件、存储也归插件（自己的 data/ 目录，总契约第九节） */
 function dataFile(ctx, name) {
   return path.join(ctx.dataDir, name);
 }
@@ -28,7 +27,7 @@ function writeSettings(ctx, obj) {
 }
 
 const actions = {
-  /** 站点清单：组（sources[]）→ 站点（sites[]），两组数组一次回（契约第五节） */
+  /** 站点清单：组（sources[]）→ 站点（sites[]），两组数组一次回（见 contract-source.md） */
   async sites(args, ctx) {
     const cfg = readSettings(ctx);
     return {
@@ -51,7 +50,7 @@ const actions = {
 
   /**
    * 解析地址：ref → 真实可直连地址 { urls, header, parse }。
-   * ref 必须可重复解析（契约第九节）；解析结果与并发重复由插件自己缓存挡住（契约第十一节）。
+   * ref 必须可重复解析（总契约第六节）；解析结果与并发重复由插件自己缓存挡住（总契约第八节）。
    */
   async play(args, ctx) {
     return { ok: false, error: { code: 'TODO', message: 'play 未实现' } };
@@ -62,7 +61,7 @@ const actions = {
     return { ok: false, error: { code: 'TODO', message: 'probe 未实现' } };
   },
 
-  /** webui 转发通道（契约第十二节）：path 是 /api/ 之后那段，body 是 UTF-8 字符串 */
+  /** webui 转发通道（总契约第九节）：path 是 /api/ 之后那段，body 是 UTF-8 字符串 */
   async http(args, ctx) {
     if (args.path === '/save' && args.method === 'POST') {
       writeSettings(ctx, JSON.parse(args.body || '{}'));

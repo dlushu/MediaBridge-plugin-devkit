@@ -16,9 +16,8 @@
 
 | 主题 | 去哪找 |
 |---|---|
-| 插件契约（动作、通道、鉴权、打包） | `framework/contracts/plugin-contract.md` |
-| 源插件显示与定位规范 | `framework/contracts/source-display-rules.md` |
-| 首页插件行与条目规范 | `framework/contracts/emby-home-plugin.md` |
+| 插件总契约（通用模型） | `framework/contracts/plugin-contract.md` |
+| 各类型契约 | `framework/contracts/contract-{source,metadata,home,subtitle,output}.md` |
 | 插件 webui 前端契约（SDK、通道前缀、门禁） | `framework/contracts/plugin-webui.md` |
 | 面板实现与分层 | 面板仓库 `ARCHITECTURE.md` / `docs/develop.md` |
 | 设计决策 ADR | 面板仓库 `docs/adr/` |

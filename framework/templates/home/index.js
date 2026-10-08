@@ -2,13 +2,13 @@
 /**
  * __PLUGIN_NAME__ —— 首页插件骨架。
  *
- * 行与条目规范见 framework/contracts/emby-home-plugin.md（必读，HomeItem 字段表在第四节）；
- * 通用模型见 framework/contracts/plugin-contract.md 第八节。
+ * 契约见 framework/contracts/contract-home.md（必读，HomeItem 字段表在第四节）；
+ * 通用模型见同目录 plugin-contract.md。
  *
  * 最容易踩的坑：**一页必须按客户端窗口填满** —— items 少于 limit 客户端就判最后一页、
- * 不再翻页。按 startIndex+limit 连续取上游页，再切出自己这一页（契约第八节）。
+ * 不再翻页。按 startIndex+limit 连续取上游页，再切出自己这一页（见 contract-home.md）。
  *
- * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（契约第四节）。
+ * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（总契约第四节）。
  */
 
 const actions = {
@@ -38,7 +38,7 @@ const actions = {
     return { ok: false, error: { code: 'TODO', message: 'run 未实现' } };
   },
 
-  /** webui 转发通道（契约第十二节） */
+  /** webui 转发通道（总契约第九节） */
   async http(args, ctx) {
     return { status: 404, body: { ok: false, error: 'no route' } };
   },
