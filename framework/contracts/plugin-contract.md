@@ -1,13 +1,11 @@
 # 插件契约
 
-> **状态：已定稿，正在按批次落地。** 本文描述的是**目标形态**，实现进度以
-> 插件仓库的 [plugin-migration-plan.md](https://github.com/dlushu/media-bridge-plugins/blob/main/docs/plugin-migration-plan.md) 与面板仓库的
-> [CHANGELOG.md](https://github.com/dlushu/media-bridge-panel/blob/main/CHANGELOG.md) 为准。
+> **契约版本：1**。本文描述的是面板与插件之间的**现行契约**（不是规划）：不兼容变更
+> （删字段、改语义、改动作名）会让版本号 +1；兼容追加（加可选字段、加可选动作）不升号。
+> 插件在 `plugin.json` 用 `contract` 字段声明自己按哪版开发。
 > 决策依据见面板仓库 [docs/adr/](https://github.com/dlushu/media-bridge-panel/tree/main/docs/adr) 的 0028~0035；
-> 讨论过程的存档见插件仓库 [plugin-arch-draft.md](https://github.com/dlushu/media-bridge-plugins/blob/main/docs/plugin-arch-draft.md)。
->
-> **契约版本：1**。本文的不兼容变更（删字段、改语义、改动作名）会让版本号 +1；
-> 兼容追加（加可选字段、加可选动作）不升号。插件在 `plugin.json` 用 `contract` 字段声明自己按哪版开发。
+> 制定过程的存档见插件仓库 [plugin-arch-draft.md](https://github.com/dlushu/media-bridge-plugins/blob/main/docs/plugin-arch-draft.md)
+> 与 [plugin-migration-plan.md](https://github.com/dlushu/media-bridge-plugins/blob/main/docs/plugin-migration-plan.md)。
 
 本文是插件契约的**唯一来源**：插件能做什么、面板会怎么调它、哪些必须遵守。代码里不放本文没写的字段或行为。
 
