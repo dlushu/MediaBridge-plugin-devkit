@@ -4,7 +4,7 @@
  * 本地契约校验：插件开发者在打包前自查。
  *
  * 用法（在项目根目录）：
- *   node framework/tools/check.js               # 校验 plugins/*/ 下全部
+ *   node framework/tools/check.js               # 校验 plugins/ 下全部
  *   node framework/tools/check.js <id> [更多…]   # 只校验指定的
  *
  * 不合法就抛出 BAD_MANIFEST，exit 1；全通过就列出 id / name / version / types。
