@@ -371,7 +371,9 @@ ctx.hostCall(target, action, args) -> Promise<{ ok: true, value } | { ok: false,
 
 面板把到来请求转成动作调用，再按**通道**把返回值转回去。公共底座是宿主的 `runner.js`：
 动作**正常 return** → 回 `{ ok: true, value }`；动作**抛异常** → 回 `{ ok: false, error }`
-（异常上的 `code` 原样透传）。各通道在这之上再决定要不要认"业务信封"：
+（异常上的 `code` 原样透传；异常若带 `cause`，面板也一并带回 `error.cause = { code?, message? }` ——
+Node `fetch()` 失败时 `e.message` 恒为一句 `fetch failed`，真因（如 `ENOTFOUND`）在 `e.cause`，别丢）。
+各通道在这之上再决定要不要认"业务信封"：
 
 | 通道 | 面板怎么判失败 | 插件该怎么报失败 |
 |---|---|---|

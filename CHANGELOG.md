@@ -12,6 +12,11 @@
 
 ### 契约（`framework/contracts/`）
 
+- **失败回执新增可选 `cause` 字段**（`plugin-contract.md` 第十节）：异常上若带 `cause`，
+  面板一并带回 `error.cause = { code?, message? }`。Node `fetch()` 失败时 `e.message` 恒为
+  `fetch failed`，真因（`ENOTFOUND` / `bad port` 等）在 `e.cause` —— 此前宿主 `runner.js`
+  只取 `code` / `message`，把它压成通用的 `PLUGIN_ERROR: fetch failed`。属**兼容追加**（加可选字段，不升号）。
+  **面板侧对应改动**：`server/modules/plugin/runner.js` 动作异常回执透传 `cause`（面板仓）。
 - **新增"各通道怎么表达失败"总表**（`plugin-contract.md` 第十节）：此前契约只零散提到"失败照实"，
   没规定 throw 与"业务信封"的边界。现明确五类通道口径 ——
   - `metadata`：认 `r.ok` **加**返回体 `v.ok===false` → throw 或回 `{ok:false,error}` 皆可；
