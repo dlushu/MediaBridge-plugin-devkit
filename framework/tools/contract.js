@@ -159,6 +159,8 @@ function readManifest(dir) {
     updateUrl,
     depends: Array.isArray(raw.depends) ? raw.depends.map((x) => String(x)) : [],
     description: String(raw.description || '').trim(),
+    /** 只影响插件库清单：写了 true 的包照常打进 packages/，但不进 index.json */
+    hidden: raw.hidden === true,
   };
 }
 

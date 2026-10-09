@@ -21,7 +21,9 @@
  *   · 源码与产物都按 id 平铺，不按类型分目录；
  *   · 打 `<id>` 前先把产物目录里 `<id>/` 整个删掉，升版本后不留新旧两个包；
  *   · 源码连契约都过不了就当场报错、不打包（打包本身是一道前置校验，见 contract.js）；
- *   · 包内那份 plugin.json 会被注入 `files`（逐文件 md5），源码里不写这个字段。
+ *   · 包内那份 plugin.json 会被注入 `files`（逐文件 md5），源码里不写这个字段；
+ *   · `plugin.json` 里写了 `hidden: true` 的包照常打进 `packages/`，但**不进 index.json**
+ *     （面板「插件库」页不列它；直装 .tar.gz 与 updateUrl 自更新都不受影响）。
  */
 const fs = require('fs');
 const os = require('os');
@@ -148,6 +150,7 @@ function packOne(one, outRoot, tmpRoot, library) {
     path: rel,
     _files: Object.keys(files).length + 1,
     _dirName: one.dirName,
+    hidden: m.hidden,
   };
 }
 
@@ -190,16 +193,20 @@ function entryOfPackage(file, outRoot, tmpRoot) {
     bytes: buf.length,
     md5: md5(buf),
     path: path.relative(outRoot, file).split(path.sep).join('/'),
+    hidden: m.hidden,
   };
 }
 
 function rebuildIndex(outRoot, tmpRoot) {
   const seen = new Map();
-  const plugins = collectPackages(outRoot).map((f) => entryOfPackage(f, outRoot, tmpRoot));
-  for (const e of plugins) {
+  const all = collectPackages(outRoot).map((f) => entryOfPackage(f, outRoot, tmpRoot));
+  for (const e of all) {
     if (seen.has(e.id)) throw new Error(`packages/ 里存在两个 id=${e.id} 的包（${seen.get(e.id)} 与 ${e.path}），先删掉旧的`);
     seen.set(e.id, e.path);
   }
+  /* `plugin.json` 里写了 `hidden: true` 的包不进清单：面板插件库不列它，
+   * 但包还在 packages/ 里（直接传 .tar.gz 装、或走 updateUrl 自更新都不受影响）。 */
+  const plugins = all.filter((e) => !e.hidden);
   plugins.sort((a, b) => (a.types[0] === b.types[0] ? a.id.localeCompare(b.id) : a.types[0].localeCompare(b.types[0])));
   const clean = plugins.map(({ types, id, name, author, version, description, domain, hasWebui, depends, bytes, md5, path: p }) => {
     const row = { types, id, name, author, version, description, domain: domain || undefined, hasWebui, depends, bytes, md5, path: p };
@@ -263,12 +270,14 @@ function main() {
       if (e._dirName !== e.id) console.log(`  ⚠ 目录名与 plugin.json 的 id 不一致：…/${e._dirName} → ${e.id}`);
       console.log(
         `  ${e.types.join('/').padEnd(20)} ${e.id.padEnd(10)} v${String(e.version).padEnd(8)} ${String(e._files).padStart(3)} 文件  ` +
-          `${String(e.bytes).padStart(8)}B  md5 ${e.md5.slice(0, 8)}…`
+          `${String(e.bytes).padStart(8)}B  md5 ${e.md5.slice(0, 8)}…${e.hidden ? '  （隐藏，不入清单）' : ''}`
       );
     }
+    const hiddenCount = entries.filter((e) => e.hidden).length;
     console.log(
       library
-        ? `\n  本次打 ${entries.length} 个；index.json 已按 packages/ 重算，共 ${indexCount} 个插件。`
+        ? `\n  本次打 ${entries.length} 个；index.json 已按 packages/ 重算，共 ${indexCount} 个插件` +
+            `${hiddenCount ? `（另有 ${hiddenCount} 个隐藏包在 packages/ 里、不入清单）` : ''}。`
         : `\n  本次打 ${entries.length} 个。装到面板：node framework/tools/panel.js install <id>`
     );
   } finally {
