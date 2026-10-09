@@ -19,6 +19,9 @@
 | 站点测速 | `probe` | 实例 + 站点 key + 搜索词、超时 | 一发探针的结果 | 必需 |
 | webui | `http` | `{method, path, query, body, contentType}` | `{status?, body, contentType?}` | 可选 |
 
+> **失败口径**（总契约第十节）：`source` 是"信封式"通道 —— 抛异常（带 `e.code`）**或**回一个带
+> `error` 的对象都算失败；面板如实回失败码、如实留空，不编数据、不静默回退。
+
 ### `sites()` 的两级结构：组（`sources[]`）→ 站点（`sites[]`）
 
 `站点清单` 一次回两组数组。**一个插件可以申报多个组，每个组下可以挂多个站点**，

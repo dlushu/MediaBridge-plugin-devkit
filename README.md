@@ -24,7 +24,8 @@ framework/
     contract-home.md               # 首页插件契约（行与条目规范）
     contract-subtitle.md           # 字幕插件契约
     contract-output.md             # 输出插件契约
-    plugin-webui.md                # 插件 webui 前端契约（SDK、通道前缀、门禁）
+    plugin-webui.md                # 插件 webui 前端契约（侧栏注册、SDK、通道前缀、门禁）
+  DEV-NOTES.md                     # 开发避坑 / 常见问题（真踩过的坑与排查口径，非契约）
   tools/
     contract.js                    # 声明文件校验（面板 contract.js 的子集副本）
     check.js                       # 本地契约校验

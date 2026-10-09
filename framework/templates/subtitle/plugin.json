@@ -6,5 +6,6 @@
   "contract": 1,
   "types": ["subtitle"],
   "main": "index.js",
+  "webui": "ui/index.html",
   "description": ""
 }

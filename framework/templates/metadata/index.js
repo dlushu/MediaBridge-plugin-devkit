@@ -9,7 +9,7 @@
  * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（总契约第四节）。
  */
 
-const DOMAIN = '__PLUGIN_ID__'; // 域 id = 条目 Id 前缀；改了就是另一个域
+const DOMAIN = '__PLUGIN_DOMAIN__'; // 域 id = 条目 Id 前缀（形状 [a-z][a-z0-9]*）；改了就是另一个域
 
 const actions = {
   /** 注册：域 id + 能力清单 + 剧集式/电影式 + 图片基地址 + 条目外链模板（见 contract-metadata.md） */

@@ -152,7 +152,8 @@ async function main() {
   }
 
   if (cmd === 'call') {
-    const [, , type, id, action, argsJson] = process.argv;
+    /* argv[2] 是子命令 'call'，参数从 argv[3] 起（少跳一位会把 'call' 当成类型） */
+    const [, , , type, id, action, argsJson] = process.argv;
     if (!type || !id || !action) {
       console.error('用法：panel.js call <类型> <id> <动作> [argsJson] [--timeout 30000]');
       process.exit(2);
@@ -164,7 +165,7 @@ async function main() {
   }
 
   if (cmd === 'restart' || cmd === 'uninstall') {
-    const [, , type, id] = process.argv;
+    const [, , , type, id] = process.argv;
     if (!type || !id) {
       console.error(`用法：panel.js ${cmd} <类型> <id>`);
       process.exit(2);

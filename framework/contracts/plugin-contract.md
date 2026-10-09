@@ -60,7 +60,7 @@
   | `version` | 是 | 版本 |
   | `types` | 是* | 类型数组，如 `["metadata","home"]`；顺序即展示顺序，第一个是"代表类型"。*旧包可只写单个 `type`，按单元素数组兼容 |
   | `main` | — | 入口文件，默认 `index.js` |
-  | `domain` | 含 `metadata` 类型时必填 | 它注册的**域 id**（条目 Id 的前缀，见 [ADR-0031](https://github.com/dlushu/media-bridge-panel/blob/main/docs/adr/0031-metadata-by-domain.md)） |
+  | `domain` | 含 `metadata` 类型时必填 | 它注册的**域 id**（条目 Id 的前缀，形状 `[a-z][a-z0-9]*`，见 [ADR-0031](https://github.com/dlushu/media-bridge-panel/blob/main/docs/adr/0031-metadata-by-domain.md)）。**域 id 比插件 id 严**：只认小写字母开头 + 小写字母/数字，**不能直接拿插件 id 复用**（插件 id 允许 `.` `-` `_`） |
   | `series` | — | 元数据角色：剧集式（默认 `true`）还是电影式 |
   | `webui` | — | webui 入口。单类型包可写字符串（`ui/index.html`）；多类型包写 **`{ 类型: 入口 }`** 映射（`{"home":"roles/home/ui/index.html"}`），哪个类型给了入口，侧栏就在哪一栏挂一个页面 |
   | `files` | — | `{ 相对路径: md5 }` —— 给了就逐文件核对（第二道校验） |
@@ -304,9 +304,11 @@ ctx.hostCall(target, action, args) -> Promise<{ ok: true, value } | { ok: false,
 - 插件的 webui 是**静态文件**，放在插件包里、由面板托管；**插件不提供端口**。
 - **导航**：插件注册了 webui 就在导航显示一个入口，"里面是什么"是插件自己的事；
   面板只判断"有没有注册 webui"。入口放在它**所属类型那一栏**下面
-  （元数据插件挂「元数据」栏、源插件挂「源」栏）。
+  （元数据插件挂「元数据」栏、源插件挂「源」栏、首页插件挂「首页」栏、
+  输出插件挂「输出」栏、字幕插件挂「字幕」栏）。多类型包按 `webui` 映射**逐类型**挂，
+  哪个类型给了入口就挂哪一栏；一栏下没有入口的子项时该栏不显示。
   入口是**扫插件目录里的声明文件**发现的（给显示名、排序、指向哪个页面），没有中心注册表 ——
-  参照 LuCI 的做法（见第十四节）。
+  参照 LuCI 的做法（见第十一节）。
 - **设置**：**声明归插件、存储也归插件**（都在插件自己的 `data/` 里）。
 - **两条路径**（默认都在 `/api/` 下 ⇒ **受面板登录门禁**；插件可在 `plugin.json` 用
   `ingress` 逐路径放开，见下）：
@@ -364,6 +366,25 @@ ctx.hostCall(target, action, args) -> Promise<{ ok: true, value } | { ok: false,
 ## 十、失败与诊断
 
 - **失败如实**：插件报失败，面板如实记日志、如实空；不编造、不静默回退。
+
+### 各通道怎么表达失败（口径不同，别弄混）
+
+面板把到来请求转成动作调用，再按**通道**把返回值转回去。公共底座是宿主的 `runner.js`：
+动作**正常 return** → 回 `{ ok: true, value }`；动作**抛异常** → 回 `{ ok: false, error }`
+（异常上的 `code` 原样透传）。各通道在这之上再决定要不要认"业务信封"：
+
+| 通道 | 面板怎么判失败 | 插件该怎么报失败 |
+|---|---|---|
+| metadata（`lookup` / `season` …） | `runner` 的 `r.ok`（抛异常会变 false）**加**返回体的 `v.ok === false` | throw，**或**回 `{ ok:false, error:{code,message} }` |
+| source（`search` / `detail` / `play` …） | `runner` 的 `r.ok`（抛异常）**加**返回体上的 `res.error` | throw，**或**回一个带 `error` 的对象 |
+| home（`rows` / `run`） | **只认 `runner` 的 `r.ok`，不看返回体的 `ok`**（直接读 `value.rows` / `value.items`） | **必须 throw** —— 回 `{ok:false,error}` 会被当成"成功但这一行是空的" |
+| subtitle（`tracks` / `fetch`） | **只认 `runner` 的 `r.ok`，不看返回体的 `ok`**（直接把 `value` 当轨数组 / `{body,contentType}` 用） | **必须 throw** —— 回 `{ok:false,error}` 会被当成"成功但没给内容" |
+| output（`http`） | 看返回体的 `{ status, body }`（`status` 缺省 200） | 用 `status` 表达失败码（映射见第四节宿主调用失败码表），不靠抛 |
+
+一句话记法：**"信封式"通道（metadata / source）throw 与返回信封等效；"裸值式"通道
+（home / subtitle）只能 throw —— 它们把返回值本身当数据，多套一层信封就等于把失败说成空。**
+`throw` 时在 `error` 上挂 `code` 便于面板归类日志与状态码。
+
 - **可选诊断字段**：插件返回里可以带诊断信息（如"这次含预热""内部等了多久"），
   面板**照实写进日志，但不参与打分**。`init` 这类内部逻辑搬进插件之后，
   那些"看不见的等待"需要留一条线索。

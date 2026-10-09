@@ -33,9 +33,14 @@ const actions = {
   /**
    * 跑一行：{ rowId, params?, startIndex?, limit? } → { items, total, cached? }
    * items 是 HomeItem 数组（字段表见规范第四节，规范外字段面板一律丢弃）。
+   *
+   * 失败**抛异常**（带 `e.code`）：首页宿主**不认** `{ok:false,error}` 这种业务信封，
+   * 它直接读 `value.items` / `value.total` —— 回信封会被当成"成功但这一行是空的"（总契约第十节）。
    */
   async run(args, ctx) {
-    return { ok: false, error: { code: 'TODO', message: 'run 未实现' } };
+    const e = new Error('run 未实现：按 startIndex/limit 取上游页，回 { items, total }');
+    e.code = 'TODO';
+    throw e;
   },
 
   /** webui 转发通道（总契约第九节） */

@@ -17,9 +17,13 @@ description: 开发 MediaBridge 插件（源/元数据/首页/字幕/输出）�
 | 首页插件（`home`） | [首页插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-home.md) —— 行与条目规范、与 Emby 端点接线 |
 | 字幕插件（`subtitle`） | [字幕插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-subtitle.md) —— 申报轨、取内容、ref 与缓存 |
 | 输出插件（`output`） | [输出插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-output.md) —— 反向 hostCall、HTTP 编排、令牌安全 |
-| 带 webui 的 | [插件 webui 前端契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md) —— SDK、通道前缀、门禁 |
+| 带 webui 的 | [插件 webui 前端契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md) —— 侧栏注册（`plugin.json` 的 `webui` 字段）、SDK、通道前缀、门禁 |
+
+**webui 与侧栏**：`plugin.json` 的 `webui` 字段决定插件页面挂在哪一栏 —— 给了入口，面板就在该类型侧栏挂一个页面（设置 / 展示页）；不写就不挂。规则见总契约第一节字段表与第九节。
 
 **契约版本**：插件在 `plugin.json` 写 `contract: 1`；契约不兼容变更会升号，面板据此区分新旧。
+
+**开发避坑**：卡住了先看 [DEV-NOTES.md](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/DEV-NOTES.md) —— 真踩过的坑与排查口径（每条标明归属：插件 / devkit / 面板 / 环境）。
 
 ## 初始化（没有 framework/ 时）
 
@@ -74,7 +78,7 @@ cd .panel && WEB_PORT=18088 DATA_DIR=../.panel-data node server.js
 ## 铁律（每条都来自踩坑）
 
 1. **不编数据**：插件给不了 / 这次取失败 → 如实留空或报错，面板如实点名，不猜、不静默回退。
-2. **契约只读**：`framework/contracts/` 是依据。发现契约有优化空间 → 直接提问开发者 → 反馈到 [media-bridge-plugins](https://github.com/dlushu/media-bridge-plugins) 仓库，不改本仓契约正文。
+2. **契约正文只由仓库所有者改（看推送权）**：`framework/contracts/` 是依据。**对 devkit 仓有 push 权限者 = 所有者**，可直接改正文并记 `CHANGELOG.md`；**没有推送权限的开发者只读** —— 按契约开发，要改（加字段 / 改语义 / 改动作名 / 改失败口径）就报给所有者，别自改正文。
 3. **面板不解释插件数据**：动作的入参出参按契约规定，面板只做转换（Emby DTO / 页面数据）。
 4. **插件之间互不认识**：多类型包各角色放 `roles/<类型>/`，彼此不互相调用；跨插件编排靠面板 hostCall 白名单（仅 output 类型）。
 5. **凭据不入库**：面板地址/密码只写 `.panel-auth.json`（已 gitignore）；缺凭据先问用户，不盲目 curl 试探。
@@ -88,4 +92,22 @@ cd .panel && WEB_PORT=18088 DATA_DIR=../.panel-data node server.js
 
 ## 契约问题反馈
 
-发现契约需要改 → 告诉开发者 → 由开发者去 `media-bridge-plugins` 仓库改（那是契约的唯一来源）。本 skill 不代收、不改契约正文。
+- **有 devkit 仓 push 权限（= 所有者）**：直接改 `framework/contracts/` 正文，并在 `CHANGELOG.md` 记档（正文是本仓权威件）。
+- **无 push 权限的开发者**：契约只读、按契约开发；要改就报给所有者，别自改正文。
+
+## 面板问题反馈
+
+开发/实测时若撞到**面板自身的 bug**，或**面板行为不利于开发**（契约没写、面板却这样、或报错吞信息、门禁/超时不对等）：
+
+- **绝不落盘**：面板 bug **不写进本仓任何文件**（不改 docs、不记 `CHANGELOG.md`、不写 `DEV-NOTES.md`）——面板随时在变，落盘即过期误导。**只在当轮对话里**给用户报告。
+- **先判归属**：确认是**面板自身**的问题（不是插件写法 / 契约 / 环境），才走这条；其余按各自路径处理。
+- **不擅自改面板**：面板仓库不归本仓，只**产出问题报告**交给用户，由用户反馈给面板维护者。
+- **报告要能让维护者直接复现**，尽量给全这几项：
+  1. **现象**：一句话说清坏了什么；
+  2. **复现步骤**：确切的命令 / 操作（含 `panel.js ...` 原样命令与参数）；
+  3. **期望 vs 实际**：契约或常识上应该怎样，实际回什么；
+  4. **证据**：原始回执（HTTP 状态 + JSON 体）、`error.code`、关键日志片段 —— 别只转述；
+  5. **线索**：能定位到就点名（面板文件 + 行号 / 函数名）；
+  6. **环境**：面板版本、插件 `id@version`、契约版本（`plugin.json` 的 `contract`）。
+
+- **写成一段可直接粘贴的报告**给用户（不是散落在对话里），末尾可附"这是面板问题、非插件/契约问题"的结论与依据。
