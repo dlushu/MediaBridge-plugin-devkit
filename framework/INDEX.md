@@ -46,12 +46,12 @@
 
 | 主题 | 入参 | 出参 / 要点 | 权威出处 |
 |---|---|---|---|
-| 行声明 `rows` | 无 | `{ok:true, rows:[{id,title,collectionType?,feed?,total?,episodes?}]}`；`total`/`episodes` 只在 `>0` 时被采用 | `framework/contracts/contract-home.md#L41-L88@申报行清单` |
+| 行声明 `rows` | 无 | `{ok:true, rows:[{id,title,collectionType?,feed?,total?,episodes?}]}`；`total`/`episodes` 只在 `>0` 时被采用；`total` **由插件自定义**、面板**不相加**（同 `collectionType` 多行汇总取 **max**，`mixed` 不参与） | `framework/contracts/contract-home.md#L41-L98@申报行清单` |
 | 跑一行 `run` | `{rowId, params?, startIndex?, limit?}` | `{items, total, cached?}`；一页必须按窗口填满；**失败必须 `throw`** | `framework/contracts/contract-home.md#L90-L111@跑一行` |
 | 行附加声明 | — | `cacheDuration`（秒，0=不缓存）、`params:[{name,title,type,value?…}]` | `framework/contracts/contract-home.md#L119-L136@params` |
 | HomeItem（面板严格归一化） | — | `id`(必) `type`(必,movie/tv) `title`(必) `originalTitle` `year` `overview` `rating` `poster` `backdrop` `genres` `providerIds` `sourceLoc{source?,site,vodId}`；规范外字段丢弃 | `framework/contracts/contract-home.md#L140-L167@HomeItem` |
 | 与 Emby 接线 | — | 媒体库 Id = `catpawhome_` + base64url(`<插件id>|<行id>`)；`StartIndex`/`Limit` 原样透传 | `framework/contracts/contract-home.md#L170-L186@媒体库 Id` |
-| 铁律 | — | 不编假数据 / 归一化严格 / 面板不猜 | `framework/contracts/contract-home.md#L211-L216@不编假数据` |
+| 铁律 | — | 不编假数据 / 归一化严格 / 面板不猜 | `framework/contracts/contract-home.md#L220-L225@不编假数据` |
 
 ---
 
@@ -79,12 +79,12 @@
 | 主题 | 入参 | 出参 / 要点 | 权威出处 |
 |---|---|---|---|
 | 动作总表 | — | `注册`(必需) `取元数据`(必需) `取一季分集`(必需) `搜索`(必需) `http`(可选) | `framework/contracts/contract-metadata.md#L8-L19@动作总表` |
-| 取元数据字段（按用途分组） | 条目坐标（一次一个） | 身份 / 名字与时间 / `searchTitle` / 简介 / 图片（海报+背景+图集）/ 分类（名列表 + 带 id 类型项）/ 规模与评分 / 详情页那批（标语、状态、时长、分级、制作公司带 id、国家、关键词、外部 id、预告、演职、相似推荐） | `framework/contracts/contract-metadata.md#L21-L31@取元数据` |
-| 相似推荐字段 | — | 每项：`entryId` `type` `title` `year` `overview` `communityRating` `posterPath` `backdropPath`；拿不到如实回空数组 | `framework/contracts/contract-metadata.md#L33-L36@相似推荐` |
-| 取一季分集字段 | 条目坐标 + 季号 | 集号 / 集名 / 简介 / 首播 / 剧照 / 评分 / 时长 | `framework/contracts/contract-metadata.md#L38-L40@取一季分集` |
-| 能力申报 | — | 申报「会哪些 / 缺哪些」+ 剧集式 / 电影式 | `framework/contracts/contract-metadata.md#L42-L45@能力申报` |
-| 条目外链 `links` | — | `[{name,url}]`；占位符 `{type}`→movie/tv、`{id}`→编号（面板 URL 编码） | `framework/contracts/contract-metadata.md#L47-L59@links` |
-| 条目 Id | — | 形状由**面板**统一规定，插件只提供编号 + 声明剧集式/电影式 | `framework/contracts/contract-metadata.md#L65-L69@条目 Id` |
+| 取元数据字段（按用途分组） | 条目坐标（一次一个） | 身份 / 名字与时间（`year` 4 位 + `premiereDate` 面板口径 ISO 串 `YYYY-MM-DDT00:00:00.0000000Z`；上游给发行/首播时间就必须同时映这两个键）/ `searchTitle` / 简介 / 图片（海报+背景+图集）/ 分类（`genres` 名列表 + `genreItems` 带数字 id 类型项，**`genreItems` 可选**：上游无 id 可不给）/ 规模与评分 / 详情页那批（标语、状态、时长、分级、制作公司带 id、国家、关键词、外部 id、预告、演职、相似推荐） | `framework/contracts/contract-metadata.md#L21-L39@取元数据` |
+| 相似推荐字段 | — | 每项：`entryId` `type` `title` `year` `overview` `communityRating` `posterPath` `backdropPath`；拿不到如实回空数组 | `framework/contracts/contract-metadata.md#L41-L44@相似推荐` |
+| 取一季分集字段 | 条目坐标 + 季号 | 集号 / 集名 / 简介 / 首播（`premiereDate`，同上口径；可一并给 `year`）/ 剧照 / 评分 / 时长 | `framework/contracts/contract-metadata.md#L46-L49@取一季分集` |
+| 能力申报 | — | 申报「会哪些 / 缺哪些」+ 剧集式 / 电影式 | `framework/contracts/contract-metadata.md#L51-L54@能力申报` |
+| 条目外链 `links` | — | `[{name,url}]`；占位符 `{type}`→movie/tv、`{id}`→编号（面板 URL 编码） | `framework/contracts/contract-metadata.md#L56-L68@links` |
+| 条目 Id | — | 形状由**面板**统一规定，插件只提供编号 + 声明剧集式/电影式 | `framework/contracts/contract-metadata.md#L74-L78@条目 Id` |
 
 ---
 

@@ -9,32 +9,68 @@
   <script src="/sdk/plugin-ui.js" defer></script>
 </head>
 <body>
+  <!-- ① 连接 / 通用：字幕站基地址等，改完点保存 -->
   <div class="card">
-    <h3 style="margin:0">__PLUGIN_NAME__</h3>
+    <h3 style="margin:0 0 10px">连接</h3>
     <div class="row">
       <label for="baseUrl">服务地址</label>
-      <input id="baseUrl" class="input" placeholder="http://…" />
+      <input id="baseUrl" class="input" data-key="baseUrl" placeholder="https://…" />
     </div>
     <div class="row">
       <button class="btn btn-primary" id="save">保存</button>
       <span class="note" id="msg"></span>
     </div>
   </div>
+
+  <!-- ② 类型专属：字幕偏好（tracks / fetch） -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px">字幕偏好</h3>
+    <div class="note" style="margin-bottom:10px">
+      轨由 <code>tracks</code> 申报、内容由 <code>fetch</code> 给出。下面两项是占位，按你的实现增删。
+    </div>
+    <div class="row">
+      <label for="lang">默认语言</label>
+      <input id="lang" class="input" data-key="lang" placeholder="如：zh-CN" />
+    </div>
+    <div class="row">
+      <label for="format">默认格式</label>
+      <input id="format" class="input" data-key="format" placeholder="srt / ass / vtt" />
+    </div>
+  </div>
+
+  <!-- ③ 使用说明 -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px">使用说明</h3>
+    <div class="note">
+      <ul style="margin:0;padding-left:18px">
+        <li>报空数组 = 这个目标没有字幕；一条字幕一种语言算一条轨。</li>
+        <li><code>fetch</code> 失败要<b>抛异常</b>（带 <code>e.code</code>）；回 <code>{ ok:false }</code> 会被当成"成功但没给 body"。</li>
+        <li><code>ref</code> 必须可重复解析，内容缓存归插件自己。契约见 <code>framework/contracts/contract-subtitle.md</code>。</li>
+      </ul>
+    </div>
+  </div>
+
   <script>
     // 通道前缀：页面在 /api/plugins/<类型>/<id>/ui/<入口>，切掉 /ui/… 再拼 /api
     // （不能写 fetch('./api/xxx') —— 会落到静态文件路，见 plugin-webui.md 第三节）
     const API = location.pathname.replace(/\/ui\/.*$/, '') + '/api';
+    // 所有带 data-key 的控件自动读写：key 即设置字段名
+    const fields = () => Array.from(document.querySelectorAll('[data-key]'));
 
     async function load() {
-      const r = await fetch(API + '/settings');
-      const s = await r.json();
-      document.getElementById('baseUrl').value = s.baseUrl || '';
+      try {
+        const s = await (await fetch(API + '/settings')).json();
+        fields().forEach((el) => {
+          if (s[el.dataset.key] == null) return;
+          if (el.type === 'checkbox') el.checked = !!s[el.dataset.key];
+          else el.value = s[el.dataset.key];
+        });
+      } catch {}
     }
     document.getElementById('save').onclick = async () => {
-      const r = await fetch(API + '/save', {
-        method: 'POST',
-        body: JSON.stringify({ baseUrl: document.getElementById('baseUrl').value.trim() }),
-      });
+      const data = {};
+      fields().forEach((el) => { data[el.dataset.key] = el.type === 'checkbox' ? el.checked : el.value.trim(); });
+      const r = await fetch(API + '/save', { method: 'POST', body: JSON.stringify(data) });
       document.getElementById('msg').textContent = r.ok ? '已保存' : '保存失败';
     };
     load();

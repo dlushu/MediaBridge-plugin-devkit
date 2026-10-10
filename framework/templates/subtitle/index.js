@@ -11,6 +11,21 @@
  *
  * ctx 给这些：types / type / id / dataDir / log(...) / hostCall(...)（总契约第四节）。
  */
+const fs = require('fs');
+const path = require('path');
+
+/* 设置：声明归插件、存储也归插件（自己的 data/ 目录，总契约第九节） */
+function readSettings(ctx) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ctx.dataDir, 'settings.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+function writeSettings(ctx, obj) {
+  fs.mkdirSync(ctx.dataDir, { recursive: true });
+  fs.writeFileSync(path.join(ctx.dataDir, 'settings.json'), JSON.stringify(obj, null, 2));
+}
 
 const actions = {
   /**
@@ -40,6 +55,11 @@ const actions = {
    * 语言 / 基地址等等是插件自己的配置，声明与存储都归插件（见 contract-subtitle.md 第七节）。
    */
   async http(args, ctx) {
+    if (args.path === '/save' && args.method === 'POST') {
+      writeSettings(ctx, JSON.parse(args.body || '{}'));
+      return { body: { ok: true } };
+    }
+    if (args.path === '/settings') return { body: readSettings(ctx) };
     return { status: 404, body: { ok: false, error: 'no route' } };
   },
 };

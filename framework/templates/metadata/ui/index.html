@@ -9,32 +9,73 @@
   <script src="/sdk/plugin-ui.js" defer></script>
 </head>
 <body>
+  <!-- ① 连接 / 通用：图片基地址等，改完点保存 -->
   <div class="card">
-    <h3 style="margin:0">__PLUGIN_NAME__</h3>
+    <h3 style="margin:0 0 10px">连接</h3>
     <div class="row">
-      <label for="baseUrl">服务地址</label>
-      <input id="baseUrl" class="input" placeholder="http://…" />
+      <label for="baseUrl">站点基地址</label>
+      <input id="baseUrl" class="input" data-key="baseUrl" placeholder="https://…" />
+    </div>
+    <div class="row">
+      <label for="imageBase">图片基地址</label>
+      <input id="imageBase" class="input" data-key="imageBase" placeholder="https://…（拼图串用）" />
     </div>
     <div class="row">
       <button class="btn btn-primary" id="save">保存</button>
       <span class="note" id="msg"></span>
     </div>
   </div>
+
+  <!-- ② 类型专属：域注册（register / lookup / season / search） -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px">元数据域</h3>
+    <div class="note" style="margin-bottom:10px">
+      域 id 由 <code>register</code> 申报，是条目 Id 的前缀（形状 <code>[a-z][a-z0-9]*</code>）。
+      下面两项是占位，按你的实现增删。
+    </div>
+    <div class="row">
+      <label for="domain">域 id</label>
+      <input id="domain" class="input" data-key="domain" placeholder="如：mysite" />
+    </div>
+    <div class="row">
+      <label for="series">剧集式</label>
+      <input id="series" type="checkbox" data-key="series" />
+    </div>
+  </div>
+
+  <!-- ③ 使用说明 -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px">使用说明</h3>
+    <div class="note">
+      <ul style="margin:0;padding-left:18px">
+        <li>拿不到就<b>如实留空 / 如实失败</b>，不编数据（铁律第一条）。</li>
+        <li>图片按用途分「海报、背景、图集」，两版可一起给（<code>posterPath</code> + <code>backdropPath</code>）。</li>
+        <li>契约见 <code>framework/contracts/contract-metadata.md</code>。</li>
+      </ul>
+    </div>
+  </div>
+
   <script>
     // 通道前缀：页面在 /api/plugins/<类型>/<id>/ui/<入口>，切掉 /ui/… 再拼 /api
     // （不能写 fetch('./api/xxx') —— 会落到静态文件路，见 plugin-webui.md 第三节）
     const API = location.pathname.replace(/\/ui\/.*$/, '') + '/api';
+    // 所有带 data-key 的控件自动读写：key 即设置字段名
+    const fields = () => Array.from(document.querySelectorAll('[data-key]'));
 
     async function load() {
-      const r = await fetch(API + '/settings');
-      const s = await r.json();
-      document.getElementById('baseUrl').value = s.baseUrl || '';
+      try {
+        const s = await (await fetch(API + '/settings')).json();
+        fields().forEach((el) => {
+          if (s[el.dataset.key] == null) return;
+          if (el.type === 'checkbox') el.checked = !!s[el.dataset.key];
+          else el.value = s[el.dataset.key];
+        });
+      } catch {}
     }
     document.getElementById('save').onclick = async () => {
-      const r = await fetch(API + '/save', {
-        method: 'POST',
-        body: JSON.stringify({ baseUrl: document.getElementById('baseUrl').value.trim() }),
-      });
+      const data = {};
+      fields().forEach((el) => { data[el.dataset.key] = el.type === 'checkbox' ? el.checked : el.value.trim(); });
+      const r = await fetch(API + '/save', { method: 'POST', body: JSON.stringify(data) });
       document.getElementById('msg').textContent = r.ok ? '已保存' : '保存失败';
     };
     load();

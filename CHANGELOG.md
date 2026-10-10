@@ -7,7 +7,40 @@
 
 ## 未发布
 
-（暂无）
+### 契约（`framework/contracts/`）
+
+- **`contract-home.md`：写清 `total` 由插件自定义 + 面板跨行汇总口径**。此前只写了 `total` 的含义
+  （"这个库有多大"）与「`>0` 才采用」，**没写面板对同一 `collectionType` 的多行 `total` 如何汇总**——
+  于是「一个插件有多个同类型库、想让客户端显示为合并 / 相加」时无据可依。现补：`total` **完全由插件
+  自定义**（面板不做任何计算、不相加）；汇总时**同一 `collectionType` 的多个行取 `total` 最大者、不参与相加**，
+  `mixed` 行不参与 —— 故想要"相加"就让这几行**都申报同一个合计值**，想要各自真数就各报各的。属**口径澄清**
+  （不改字段、不改形状，不升号）。**面板侧无需改动**（即面板 `server/modules/emby/home/index.js`
+  `libraryTotals()` 的既有行为）。
+  **同步**：`framework/INDEX.md` §2 首页 `rows` 行补该口径并修正既有指针偏移。
+  实例：`plugins/hongguo`（短剧 + 漫剧两行申报同一合计值 → 客户端汇总显示为两者相加）。
+
+- **`contract-metadata.md`：把「年份 / 首播日期」落到具体键名与格式**。「取元数据」的「名字与时间」
+  与「取一季分集」的「首播」此前只写了语义（年份、首播日期），没点键名与格式，导致插件常漏回 →
+  客户端「年份 / 首播」显示成 `0`。现明确：`year`（4 位字符串）+ `premiereDate`（面板口径 ISO 串
+  `YYYY-MM-DDT00:00:00.0000000Z`）；上游给发行 / 首播时间（含 unix 秒时间戳）就必须同时映这两个键，
+  取不到才留空。属**兼容澄清**（键名/格式与面板既有行为、tmdb / missav 参考实现一致，不是新语义）。
+  **面板侧无需改动**。
+  **同步**：`framework/INDEX.md` 元数据两行（`#L21-L31`、`#L40-L43`）补键名 + 格式；
+  `framework/DEV-NOTES.md` 新增 §8（踩坑与排查口径）；`framework/templates/metadata/index.js`
+  的 `lookup`/`season` 骨架注释带上该提醒（新插件落地即自带）。
+  实例：`plugins/hongguo`（官方 `first_visible_time` → `year`+`premiereDate`）。
+
+- **`contract-metadata.md`：把「分类」里的 `genreItems` 明确为可选字段**。此前写「类型名列表 **与带 id
+  的类型项**」，读起来像**必须**给 `genreItems`；但上游常**只有类型名、没有 id**（如 hongguo），硬凑 id
+  反而要编假 id。现补：`genreItems`（带**数字** id 的类型项，客户端据此把"类型"做成可点链接）**由插件依
+  上游实际情况自定** —— 上游有 id 就一并给，**只有名字、没有 id 时可以不给**（面板照收 `genres`，客户端
+  只是这一栏点不进去，不会报错、更不要编假 id）。附一条面板事实：给了 id 等于承诺"点类型能进列表"，而该
+  列表端点**面板尚未实现、会 501**（ADR-0056 界内待补）。属**兼容放宽**（不改字段形状、不新增语义，
+  **不升号**）。**面板侧无需改动**（面板 `server/modules/emby/service.js` 本就是「有 `genreItems` 才映射、
+  没有就走骨架默认 `[]`」的既有行为）。
+  **同步**：`framework/INDEX.md` §4 元数据「分类」要点补「`genreItems` 可选」，并修正本节各引用因插入
+  正文产生的行号偏移。
+  实例：`plugins/hongguo`（上游无类型 id，只回 `genres`，不提供 `genreItems`）。
 
 ## v0.1.1 — 2026-10-10
 

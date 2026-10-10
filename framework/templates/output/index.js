@@ -13,6 +13,21 @@
  *
  * ⚠️ 令牌绝不编进产物或下载 URL：匿名产物里只放"怎么填令牌"的说明。
  */
+const fs = require('fs');
+const path = require('path');
+
+/* 设置：声明归插件、存储也归插件（自己的 data/ 目录，总契约第九节） */
+function readSettings(ctx) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ctx.dataDir, 'settings.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+function writeSettings(ctx, obj) {
+  fs.mkdirSync(ctx.dataDir, { recursive: true });
+  fs.writeFileSync(path.join(ctx.dataDir, 'settings.json'), JSON.stringify(obj, null, 2));
+}
 
 const actions = {
   /**
@@ -21,6 +36,12 @@ const actions = {
    * host/proto 用来拼自描述地址（这次外部请求实际打到的地址）。
    */
   async http(args, ctx) {
+    // webui 设置通道（面板登录门禁下）——与实际对外入口按 path 区分
+    if (args.path === '/save' && args.method === 'POST') {
+      writeSettings(ctx, JSON.parse(args.body || '{}'));
+      return { body: { ok: true } };
+    }
+    if (args.path === '/settings') return { body: readSettings(ctx) };
     if (args.path === '/ping') {
       /* 示例：经 hostCall 问宿主能力 */
       const r = await ctx.hostCall('agg', 'sites', {});

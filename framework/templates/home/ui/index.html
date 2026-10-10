@@ -9,34 +9,192 @@
   <script src="/sdk/plugin-ui.js" defer></script>
 </head>
 <body>
+  <!-- ① 连接 / 通用：行数据源基地址等，改完点保存 -->
   <div class="card">
-    <h3 style="margin:0">__PLUGIN_NAME__</h3>
-    <div class="row">
-      <label for="baseUrl">服务地址</label>
-      <input id="baseUrl" class="input" placeholder="http://…" />
+    <div class="add-row">
+      <h3 style="margin:0">连接</h3>
+      <span id="msg"></span>
     </div>
-    <div class="row">
-      <button class="btn btn-primary" id="save">保存</button>
-      <span class="note" id="msg"></span>
+    <div class="fset">
+      <div class="field">
+        <label>服务地址</label>
+        <input id="baseUrl" type="text" placeholder="http://…" />
+      </div>
+    </div>
+    <div class="row btn-fan">
+      <button class="btn primary" id="save">保存</button>
     </div>
   </div>
+
+  <!-- ② 行参数：每行一张卡。块的头部是行标题 + 库类型徽标 + 行 id/缓存，块里按该行声明的
+       params 渲染控件（枚举→下拉、条数→数字、其余→文本）。卡片与控件都由 /state 回的行声明即时渲染。 -->
+  <div class="card">
+    <div class="add-row">
+      <h3 style="margin:0">行参数</h3>
+      <button class="btn primary" id="saveRows">保存</button>
+    </div>
+    <div id="rowsOut"></div>
+    <div class="note">
+      每行 = 客户端一个媒体库；行清单由 <code>rows</code> 动作申报、跑行走 <code>run</code>。
+      行参数只存与默认不同的值（等于默认值的不写，配置文件才不会被默认值冻住）。
+    </div>
+  </div>
+
+  <!-- ③ 使用说明 -->
+  <div class="card">
+    <h3>使用说明</h3>
+    <div class="note">
+      <ul style="margin:0;padding-left:18px">
+        <li><b>一页必须按客户端窗口填满</b>：<code>items</code> 少于 <code>limit</code>，客户端就判为最后一页、不再翻页。</li>
+        <li><code>run</code> 失败要<b>抛异常</b>（带 <code>e.code</code>），宿主不认 <code>{ ok:false }</code> 信封。</li>
+        <li>契约见 <code>framework/contracts/contract-home.md</code>。</li>
+      </ul>
+    </div>
+  </div>
+
   <script>
     // 通道前缀：页面在 /api/plugins/<类型>/<id>/ui/<入口>，切掉 /ui/… 再拼 /api
     // （不能写 fetch('./api/xxx') —— 会落到静态文件路，见 plugin-webui.md 第三节）
     const API = location.pathname.replace(/\/ui\/.*$/, '') + '/api';
+    const $ = (id) => document.getElementById(id);
+    const CT = { movies: '电影库', tvshows: '剧库', mixed: '混合库' };
+
+    async function call(path, { method = 'GET', body } = {}) {
+      const res = await fetch(API + path, {
+        method,
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.ok === false)) throw new Error((data && data.error) || `HTTP ${res.status}`);
+      return data;
+    }
+
+    /* 当前值：用户存过的优先，没有就用行声明的默认值 */
+    function currentValue(rowId, p, saved) {
+      const one = saved[rowId];
+      if (one && Object.prototype.hasOwnProperty.call(one, p.name)) return one[p.name];
+      return p.value;
+    }
+
+    /* 一个参数的控件：枚举 → 下拉；条数 → 数字；其余 → 文本框 */
+    function paramControl(rowId, p, value) {
+      let input;
+      if (p.type === 'enumeration') {
+        input = document.createElement('select');
+        for (const o of p.enumOptions || []) {
+          const opt = document.createElement('option');
+          opt.value = o.value;
+          opt.textContent = o.title;
+          input.append(opt);
+        }
+        input.value = String(value ?? '');
+        if (input.selectedIndex < 0) input.selectedIndex = 0;
+      } else if (p.type === 'count') {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.value = String(value ?? '');
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.value = String(value ?? '');
+        if (p.description) input.placeholder = p.description;
+      }
+      input.dataset.row = rowId;
+      input.dataset.param = p.name;
+      input.dataset.type = p.type || 'input';
+      input.dataset.dft = String(p.value ?? '');
+
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const cap = document.createElement('label');
+      cap.textContent = p.title || p.name;
+      wrap.append(cap, input);
+      return wrap;
+    }
+
+    /* 画行清单：一行一块，块里是这行的参数控件 */
+    function renderRows(rows, saved) {
+      const host = $('rowsOut');
+      host.textContent = '';
+      for (const row of rows || []) {
+        const block = document.createElement('div');
+        block.className = 'filter-bar';
+
+        const head = document.createElement('div');
+        head.className = 'add-row';
+        const name = document.createElement('span');
+        name.style.fontWeight = '600';
+        name.textContent = row.title;
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = CT[row.collectionType] || '混合库';
+        const meta = document.createElement('span');
+        meta.className = 'muted';
+        meta.textContent = `${row.id}　缓存 ${row.cacheDuration ? row.cacheDuration + 's' : '关'}`;
+        head.append(name, badge, meta);
+        block.append(head);
+
+        const params = document.createElement('div');
+        params.className = 'fset';
+        const decls = row.params || [];
+        if (!decls.length) {
+          const none = document.createElement('div');
+          none.className = 'note';
+          none.textContent = '这一行没有可调参数。';
+          params.append(none);
+        }
+        for (const p of decls) params.append(paramControl(row.id, p, currentValue(row.id, p, saved)));
+        block.append(params);
+        host.append(block);
+      }
+    }
+
+    /* 收整页的行参数：**只记改动过的**（等于默认值的就不写） */
+    function collectRowParams() {
+      const out = {};
+      for (const input of $('rowsOut').querySelectorAll('[data-param]')) {
+        const rowId = input.dataset.row;
+        const name = input.dataset.param;
+        const val = input.value;
+        if (String(val) === String(input.dataset.dft)) continue;
+        if (!out[rowId]) out[rowId] = {};
+        out[rowId][name] = input.dataset.type === 'count' ? Number(val) || 0 : val;
+      }
+      return out;
+    }
 
     async function load() {
-      const r = await fetch(API + '/settings');
-      const s = await r.json();
-      document.getElementById('baseUrl').value = s.baseUrl || '';
+      try {
+        const state = await call('/state');
+        $('baseUrl').value = (state.settings && state.settings.baseUrl) || '';
+        renderRows(state.rows, state.rowParams || {});
+      } catch (e) {
+        $('msg').textContent = '读取失败：' + e.message;
+      }
     }
-    document.getElementById('save').onclick = async () => {
-      const r = await fetch(API + '/save', {
-        method: 'POST',
-        body: JSON.stringify({ baseUrl: document.getElementById('baseUrl').value.trim() }),
-      });
-      document.getElementById('msg').textContent = r.ok ? '已保存' : '保存失败';
+
+    $('save').onclick = async () => {
+      try {
+        await call('/settings', { method: 'POST', body: { baseUrl: $('baseUrl').value.trim() } });
+        $('msg').textContent = '已保存';
+      } catch (e) {
+        $('msg').textContent = '保存失败：' + e.message;
+      }
     };
+
+    $('saveRows').onclick = async () => {
+      try {
+        await call('/settings', { method: 'POST', body: { rowParams: collectRowParams() } });
+        /* 存完重画：库类型跟着参数走时，界面上那张「电影库 / 剧库」的牌子要立刻对上 */
+        const state = await call('/state');
+        renderRows(state.rows, state.rowParams || {});
+        $('msg').textContent = '行参数已保存（客户端下次拉媒体库时生效）';
+      } catch (e) {
+        $('msg').textContent = '保存行参数失败：' + e.message;
+      }
+    };
+
     load();
   </script>
 </body>
