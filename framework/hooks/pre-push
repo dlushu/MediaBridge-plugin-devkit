@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# pre-push：推送 main 时若本次提交还没改版本号，自动升 patch 并新提一个 commit。
+# 启用：git config core.hooksPath framework/hooks（一次性，见 AGENTS.md 铁律 13）
+#
+# 注意：git 在调本钩子前已锁定要推的 sha，钩子内新提的 commit 本次推不出去 ——
+# 所以这里升版提交后直接退出（非零），请照提示重新 git push；第二次范围里已含
+# 版本改动，钩子放行。
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+ZERO="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  branch="${remote_ref#refs/heads/}"
+  [ "$branch" = "$remote_ref" ] && continue            # 非分支（tag 等），不管
+  [ "$branch" != "main" ] && continue                  # 只守 main
+
+  # 新分支：查整条历史；已有分支：查待推区间
+  if [ "$remote_sha" = "$ZERO" ]; then
+    changed="$(git diff-tree --no-commit-id --name-only -r "$local_sha" -- VERSION framework/framework.json 2>/dev/null || true)"
+    # 新分支可能有多提交，再用 log 兜一层
+    [ -z "$changed" ] && changed="$(git log --format= --name-only "$local_sha" -- VERSION framework/framework.json | head -1 || true)"
+  else
+    changed="$(git diff --name-only "$remote_sha..$local_sha" -- VERSION framework/framework.json || true)"
+  fi
+
+  if [ -n "$changed" ]; then
+    echo "pre-push：本次推送已含版本号改动，放行。"
+    exit 0
+  fi
+
+  echo "pre-push：推送 main 但未改版本号，自动升 patch …"
+  node framework/tools/version.js patch
+
+  git add framework/framework.json VERSION CHANGELOG.md
+  NEW_VER="$(cat VERSION | tr -d '[:space:]')"
+  git commit -m "chore: framework v${NEW_VER}"
+
+  cat >&2 <<EOF
+
+✔ 已自动升版并提交：v${NEW_VER}
+  该提交不在本次推送范围内，请重新执行一次 git push。
+
+EOF
+  exit 1
+done
+
+exit 0

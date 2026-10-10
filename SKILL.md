@@ -7,10 +7,15 @@ description: 开发 MediaBridge 插件（源/元数据/首页/字幕/输出）�
 
 这是**给开发 MediaBridge 插件的人**用的 skill。你的项目里应该有这个 skill + `framework/` 框架；如果没有，先初始化。
 
+> **开工第一步（每次）**：先跑 `node framework/tools/update.js --check` —— 仅一个小 JSON 请求。
+> 提示有新版时，告诉用户「本地 vX → 远端 vY，要不要升级」，用户同意后跑
+> `node framework/tools/update.js`（或 `node framework/tools/init.js --upgrade`）。已是最新则直接开工。
+
 ## 契约索引（按类型选读）
 
 | 你要做什么 | 必读 |
 |---|---|
+| **先查速查索引** | [INDEX.md](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/INDEX.md) —— 派生 cheat-sheet：每动作一行「入参键 → 出参键 → 权威出处指针」，定位字段先用它，少读大契约（不是权威件，冲突以正文为准） |
 | **所有插件** | [插件总契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-contract.md) —— 通用模型：包、通道、动作、执行、缓存、webui、失败口径 |
 | 源插件（`source`） | [源插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-source.md) —— 动作清单、组/站点模型、显示与定位口径 |
 | 元数据插件（`metadata`） | [元数据插件契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/contract-metadata.md) —— 注册、取元数据、取分集、搜索 |
@@ -20,6 +25,24 @@ description: 开发 MediaBridge 插件（源/元数据/首页/字幕/输出）�
 | 带 webui 的 | [插件 webui 前端契约](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md) —— 侧栏注册（`plugin.json` 的 `webui` 字段）、SDK、通道前缀、门禁 |
 
 **webui 与侧栏**：`plugin.json` 的 `webui` 字段决定插件页面挂在哪一栏 —— 给了入口，面板就在该类型侧栏挂一个页面（设置 / 展示页）；不写就不挂。规则见总契约第一节字段表与第九节。
+
+### 多类型插件：按类型配 UI（推荐）
+
+一个包多个类型时，**推荐每个类型一个页面**（`roles/<类型>/ui/index.html`，`webui` 写 `{类型:入口}` 映射），按该类型的活定制，而不是三栏共用一页。完整形态参考官方 **tmdb** 插件（3 张 card：连接 → 类型专属区 → 使用说明）；`framework/templates/<类型>/ui/` 目前只是最小起点（单 card：服务地址 + 保存），不是成品。
+
+| 类型 | 页面推荐区块（自上而下） | 典型可配参数 |
+|---|---|---|
+| `home` | ① 连接（共享配置只展示/透写）② **行参数**（每行一组）③ 使用说明 | 每行取数条数、分类/榜单枚举、媒体库类型、语言；行参数只存与默认不同的值 |
+| `source` | ① 连接 ② 站点列表（多站点时）③ 使用说明 | 服务地址 / 账号密钥、各站点开关、超时、结果条数；配「测试连接」按钮 + 状态徽标 |
+| `metadata` | ① 连接 ② **缓存** ③ 使用说明 | Token、语言、API / 图片基地址、缓存天数（0 = 不缓存）、缓存上限（0 = 不限）；缓存查看 / 清空 |
+| `subtitle` | ① 连接 ② 字幕偏好 ③ 使用说明 | API Key / 服务地址、偏好语言、输出格式（srt / ass）、超时 |
+| `output` | ① 鉴权 ② HTTP / 安全 ③ 使用说明 | 回调公网地址、签名密钥、`ingress` 白名单、令牌有效期 |
+
+统一约定：
+
+- **只依赖面板 SDK**：`/sdk/plugin-ui.css` + `/sdk/plugin-ui.js`；API 前缀按 `location.pathname` 动态算，禁写相对路径（见 [plugin-webui.md](https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/contracts/plugin-webui.md)）。
+- **共享配置只配一份**：多类型包的连接参数归一个角色管，其他角色读 / 透写（tmdb 模式：home 改连接透写到 metadata 的设置文件），别让用户配两遍；各角色写盘文件名按角色隔开。
+- 长文案一律收进「使用说明」卡，表单区只放参数本身。
 
 **契约版本**：插件在 `plugin.json` 写 `contract: 1`；契约不兼容变更会升号，面板据此区分新旧。
 
@@ -40,13 +63,32 @@ curl -sL https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main
 
 init 会落进：`.trae/skills/media-bridge-plugin-dev/SKILL.md`、`framework/`（工具 + 契约 + 模板）、`.gitignore` 追加、`plugins/` 目录。
 
-## 版本更新检查
+## 版本更新
 
-框架有版本号（`framework/framework.json`）。远端仓库更新后，本地启动 agent 时它会提醒你：
-- 本地版本：`framework/framework.json` 里的 `version`
-- 远端版本：`https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/framework.json`
+版本号：`framework/framework.json`（权威）+ 根 `VERSION`，两处一致。
 
-提醒开发者是否升级；升级就是重跑一次 `init.js --upgrade`（只覆盖 `framework/` 与 skill，不动你的插件源码）。
+```bash
+node framework/tools/update.js --check    # 比对本地/远端（退出码 2 = 有新版）
+node framework/tools/update.js            # 下载并整体更新 framework/ 与本 SKILL.md
+node framework/tools/init.js --upgrade    # 等价；curl 管道也行（见下）
+```
+
+只覆盖 `framework/` 与 `.trae/skills/.../SKILL.md`，不碰 `plugins/`。网络不通时退出码 3。
+
+零克隆升级（本地连 framework 都没有时）：
+
+```bash
+curl -sL https://raw.githubusercontent.com/dlushu/MediaBridge-plugin-devkit/main/framework/tools/init.js \
+  | node - --upgrade
+```
+
+**有仓库推送权的所有者**：启用 pre-push 钩子后，推 main 时若没改版本号会自动升 patch 并新提一个
+commit（重新 push 一次即可），CHANGELOG「未发布」段有内容时自动落版本号与日期：
+
+```bash
+git config core.hooksPath framework/hooks   # 一次性启用
+node framework/tools/version.js minor       # 需要 minor/major 时手动升（默认 patch）
+```
 
 ## 开发工作流
 

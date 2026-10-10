@@ -26,9 +26,11 @@ framework/
     contract-output.md             # 输出插件契约
     plugin-webui.md                # 插件 webui 前端契约（侧栏注册、SDK、通道前缀、门禁）
   DEV-NOTES.md                     # 开发避坑 / 常见问题（真踩过的坑与排查口径，非契约）
+  INDEX.md                         # 速查索引（派生 cheat-sheet：每动作一行「入参 → 出参 → 出处指针」）
   tools/
     contract.js                    # 声明文件校验（面板 contract.js 的子集副本）
     check.js                       # 本地契约校验
+    index-check.js                 # 校验 INDEX.md 的 #Lx-Ly@锚点 是否仍命中
     pack.js                        # 打 tar.gz + 注入 files 校验（--library 模式生成 index.json）
     panel.js                       # 面板 API 客户端：login / install / call / list
     init.js                        # 把框架落进开发者的项目

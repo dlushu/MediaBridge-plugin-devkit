@@ -4,3 +4,11 @@ dist/
 .panel/
 .panel-data/
 .panel-auth.json
+samples/
+
+# ---- 本仓（官方 devkit）作为私有开发工作区：插件源码与发布产物都不入库 ----
+# plugins/  插件源码（11 个，统一在此开发）
+# packages/ + index.json  插件库模式打包产物（发布时再同步到 media-bridge-plugins）
+plugins/
+packages/
+index.json

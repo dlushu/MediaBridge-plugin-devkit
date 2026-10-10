@@ -42,6 +42,9 @@
   现改为按 id 洗出合法域 id，并支持 `--domain 域id` 指定、非法即报错退出。
 - **`panel.js`**：修正 `call` / `restart` / `uninstall` 子命令的 `argv` 取值 —— 原实现少跳一位，
   把子命令名 `call` 当成了类型，`call` 这条命令实际不可用。
+- **`index-check.js`（新增）**：校验 `framework/INDEX.md` 里每个 `file#Lx-Ly@锚点` 引用仍命中
+  （文件存在 / 区间合法 / 区间含锚点），并检查 `framework/contracts/` 覆盖率。契约改版导致区间
+  漂移会在此暴露。用法：`node framework/tools/index-check.js`。
 
 ### 模板（`framework/templates/`）
 
@@ -56,6 +59,14 @@
 
 ### 文档
 
+- 新增 `framework/INDEX.md`：**速查索引**（派生 cheat-sheet）。按 5 个类型把每动作压成一行
+  「入参键 → 出参键 → 权威出处指针」，定位动作 / 字段时先查它，不够再定点读契约正文对应区间，
+  避免整读大契约。**不是权威件**，与正文冲突以正文为准；正文变更后须同步本索引。
+  `README.md` 目录树与 `SKILL.md` 契约索引已加指向它的入口。
+- `AGENTS.md`：新增第 10 条 —— **大文件取证走 subagent + 结论必须落盘（铁律）**（单次 >300 行
+  或 >~3000 token 的取证一律交 subagent，主上下文只收「结论 + `file#Lx-Ly`」；结论当场写入
+  `PLAN.md` / `DEV-NOTES.md`）；新增第 11 条 —— **先查索引再读正文**（先读 `framework/INDEX.md`，
+  改正文后同步索引并跑 `index-check.js`）。两条针对「反复压缩却不开工」的根因。
 - 新增 `framework/DEV-NOTES.md`：**开发避坑 / 常见问题**（独立于契约，面向"卡住了照这条查"），
   收录本轮实测真踩到的 6 条，逐条标明归属（插件写法 / devkit / 环境 / 正常行为）。
 - `plugin-contract.md` 第一节字段表 `domain` 行：补"**域 id 比插件 id 严**（只认 `[a-z][a-z0-9]*`），
