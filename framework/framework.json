@@ -1,6 +1,6 @@
 {
   "name": "media-bridge-plugin-devkit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "source": "https://github.com/dlushu/MediaBridge-plugin-devkit",
   "note": "framework/contracts/ 是插件契约的权威件；framework/tools/contract.js 是面板 server/modules/plugin/contract.js 的子集副本"
 }

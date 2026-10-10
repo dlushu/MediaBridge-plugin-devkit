@@ -7,6 +7,10 @@
 
 ## 未发布
 
+（暂无）
+
+## v0.1.2 — 2026-10-10
+
 ### 契约（`framework/contracts/`）
 
 - **`contract-home.md`：写清 `total` 由插件自定义 + 面板跨行汇总口径**。此前只写了 `total` 的含义
