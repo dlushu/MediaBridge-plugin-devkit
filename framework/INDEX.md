@@ -29,16 +29,18 @@
 
 | 主题 | 入参 | 出参 / 要点 | 权威出处 |
 |---|---|---|---|
-| 身份与目录、`plugin.json` 字段 | — | `id` `name` `version` `types` `main` `domain` `series` `webui` `files` `depends` `ingress` `updateUrl` `contract` `description` `author` | `framework/contracts/plugin-contract.md#L34-L80@plugin.json` |
-| 执行模型 | — | 常驻子进程、面板启停、不沙箱、崩溃不自动重启 | `framework/contracts/plugin-contract.md#L139-L148@执行模型` |
-| 通道与入口形状 | `(args, ctx)` | `module.exports = { actions: { <动作名>: async (args,ctx)=>… } }`；ctx：`type` `id` `dataDir` `log` `hostCall` | `framework/contracts/plugin-contract.md#L152-L184@module.exports` |
-| `ctx.hostCall`（反调宿主） | `target` `action` `args` | 成功 `{ok:true,value}` / 失败 `{ok:false,error:{code,message}}`；白名单外回 `NO_HOSTCALL` | `framework/contracts/plugin-contract.md#L186-L212@hostCall` |
-| 按类型的动作清单入口 | — | 各类型文档各一份 | `framework/contracts/plugin-contract.md#L217-L229@按类型的动作契约` |
-| 播放地址转交 | `ref` `clientHost` | 插件回真实可直连地址，面板 302 | `framework/contracts/plugin-contract.md#L233-L250@播放地址的转交` |
-| 模板与域 | — | 域 id 形状 `[a-z][a-z0-9]*`；每域最多一个模板 | `framework/contracts/plugin-contract.md#L254-L270@模板与域` |
-| 缓存分工 | — | 插件侧：自取数结果（有效期插件定）；面板侧：这一条目的线路结果 | `framework/contracts/plugin-contract.md#L274-L298@缓存分工` |
-| webui / 设置 / 门禁 / `http` 动作 | `method` `path` `query` `body` `contentType` `host` `proto` | `{status?, body, contentType?}`；门禁默认须登录，`ingress` 声明才放开 | `framework/contracts/plugin-contract.md#L302-L362@ingress` |
-| 失败与诊断（分通道口径） | — | 见 §失败口径速记 | `framework/contracts/plugin-contract.md#L366-L394@失败与诊断` |
+| 身份与目录、`plugin.json` 字段 | — | `id` `name` `version` `types` `main` `domain` `series` `binds` `webui` `files` `depends` `ingress` `updateUrl` `contract` `description` `author` | `framework/contracts/plugin-contract.md#L82-L129@plugin.json` |
+| 执行模型 | — | 常驻子进程、面板启停、不沙箱、崩溃不自动重启 | `framework/contracts/plugin-contract.md#L174-L186@执行模型` |
+| 通道与入口形状 | `(args, ctx)` | `module.exports = { actions: { <动作名>: async (args,ctx)=>… } }`；ctx：`type` `id` `dataDir` `log` `hostCall` | `framework/contracts/plugin-contract.md#L201-L233@module.exports` |
+| `ctx.hostCall`（反调宿主） | `target` `action` `args` | 成功 `{ok:true,value}` / 失败 `{ok:false,error:{code,message}}`；白名单外回 `NO_HOSTCALL` | `framework/contracts/plugin-contract.md#L235-L261@hostCall` |
+| 按类型的动作清单入口 | — | 各类型文档各一份 | `framework/contracts/plugin-contract.md#L252-L267@按类型的动作契约` |
+| **可选能力的申报（跨类型通则）** | — | **有能力就申报**（漏申报＝客户端白少一块，如无 `feed` 则推荐位恒空）；**发现即提醒**；**绝不硬造** | `framework/contracts/plugin-contract.md#L32-L43@可选能力的申报` |
+| **面板代取图片（`/api/emby/img/…`）** | — | 图片字段（`posterPath`/`vod_pic`/`item.poster`）可给**根相对**的 `/api/emby/img/{host}/{path}?…&mbh=…` 声明「这张图请面板代取」；`mbh`＝要带的头（**插件给**，面板不许写站点域名），签名由**面板**补并覆盖 `mbh` | `framework/contracts/plugin-contract.md#L45-L66@面板代取图片` |
+| 播放地址转交 | `ref` `clientHost` | 插件回真实可直连地址，面板 302 | `framework/contracts/plugin-contract.md#L268-L288@播放地址的转交` |
+| 模板与域 | — | 域 id 形状 `[a-z][a-z0-9]*`；每域最多一个模板 | `framework/contracts/plugin-contract.md#L289-L308@模板与域` |
+| 缓存分工 | — | 插件侧：自取数结果（有效期插件定）；面板侧：这一条目的线路结果 | `framework/contracts/plugin-contract.md#L309-L336@缓存分工` |
+| webui / 设置 / 门禁 / `http` 动作 | `method` `path` `query` `body` `contentType` `host` `proto` | `{status?, body, contentType?}`；门禁默认须登录，`ingress` 声明才放开 | `framework/contracts/plugin-contract.md#L351-L411@ingress` |
+| 失败与诊断（分通道口径） | — | 见 §失败口径速记 | `framework/contracts/plugin-contract.md#L401-L432@失败与诊断` |
 
 ---
 
@@ -46,12 +48,12 @@
 
 | 主题 | 入参 | 出参 / 要点 | 权威出处 |
 |---|---|---|---|
-| 行声明 `rows` | 无 | `{ok:true, rows:[{id,title,collectionType?,feed?,total?,episodes?}]}`；`total`/`episodes` 只在 `>0` 时被采用；`total` **由插件自定义**、面板**不相加**（同 `collectionType` 多行汇总取 **max**，`mixed` 不参与） | `framework/contracts/contract-home.md#L41-L98@申报行清单` |
-| 跑一行 `run` | `{rowId, params?, startIndex?, limit?}` | `{items, total, cached?}`；一页必须按窗口填满；**失败必须 `throw`** | `framework/contracts/contract-home.md#L90-L111@跑一行` |
-| 行附加声明 | — | `cacheDuration`（秒，0=不缓存）、`params:[{name,title,type,value?…}]` | `framework/contracts/contract-home.md#L119-L136@params` |
-| HomeItem（面板严格归一化） | — | `id`(必) `type`(必,movie/tv) `title`(必) `originalTitle` `year` `overview` `rating` `poster` `backdrop` `genres` `providerIds` `sourceLoc{source?,site,vodId}`；规范外字段丢弃 | `framework/contracts/contract-home.md#L140-L167@HomeItem` |
-| 与 Emby 接线 | — | 媒体库 Id = `catpawhome_` + base64url(`<插件id>|<行id>`)；`StartIndex`/`Limit` 原样透传 | `framework/contracts/contract-home.md#L170-L186@媒体库 Id` |
-| 铁律 | — | 不编假数据 / 归一化严格 / 面板不猜 | `framework/contracts/contract-home.md#L220-L225@不编假数据` |
+| 行声明 `rows` | 无 | `{ok:true, rows:[{id,title,collectionType?,feed?,total?,episodes?}]}`；`total`/`episodes` 只在 `>0` 时被采用；`total` **由插件自定义**、面板**不相加**（同 `collectionType` 多行汇总取 **max**，`mixed` 不参与）；`feed` 可选但**有能力建议申报**（否则客户端推荐位/轮播恒空） | `framework/contracts/contract-home.md#L41-L103@申报行清单` |
+| 跑一行 `run` | `{rowId, params?, startIndex?, limit?}` | `{items, total, cached?}`；一页必须按窗口填满；**失败必须 `throw`** | `framework/contracts/contract-home.md#L95-L116@跑一行` |
+| 行附加声明 | — | `cacheDuration`（秒，0=不缓存）、`params:[{name,title,type,value?…}]` | `framework/contracts/contract-home.md#L124-L141@params` |
+| HomeItem（面板严格归一化） | — | `id`(必) `type`(必,movie/tv) `title`(必) `originalTitle` `year` `overview` `rating` `poster` `backdrop` `genres` `providerIds` `sourceLoc{source?,site,vodId}`；规范外字段丢弃 | `framework/contracts/contract-home.md#L145-L172@HomeItem` |
+| 与 Emby 接线 | — | 媒体库 Id = `catpawhome_` + base64url(`<插件id>|<行id>`)；`StartIndex`/`Limit` 原样透传 | `framework/contracts/contract-home.md#L175-L191@媒体库 Id` |
+| 铁律 | — | 不编假数据 / 归一化严格 / 面板不猜 | `framework/contracts/contract-home.md#L225-L230@不编假数据` |
 
 ---
 
@@ -64,13 +66,14 @@
 | 本站点五字段 | — | `source` `key` `name` `api` `directLines`（面板只认这五个） | `framework/contracts/contract-source.md#L99-L120@directLines` |
 | 认证标 `vod_exact` | — | `json.list[].vod_exact === true` 时面板直接采信该候选 | `framework/contracts/contract-source.md#L122-L140@vod_exact` |
 | 取数式样：一层 / 两层 | — | `directLines:false`（缺省，两层式）/ `true`（一层式） | `framework/contracts/contract-source.md#L142-L157@两层式` |
-| 组名渲染 | — | `sources[].name · sites[].name`（`·` 只由渲染层插入） | `framework/contracts/contract-source.md#L172-L194@组名` |
-| 搜索候选 `search` | 实例 + 站点 key + 搜索词/页码/超时 | `json.list[]`：`vod_id` `vod_name` `vod_pic` `vod_remarks`（+可选 `vod_exact`）；`vod_name` 必须是干净片名主干 | `framework/contracts/contract-source.md#L207-L233@vod_name` |
-| 详情 `detail`（按季集定位） | `{…, season, episode, pick?}` | 剧集：`episodes[]`(全集) + `target`(按季集定位项，定位不到 `null`)；电影：`pick:'items'`→`items[]`，`target=items[0]` | `framework/contracts/contract-source.md#L235-L265@必须回全集` |
-| 三级定位规则 | — | 命中依据写入 `target.matchedBy` ∈ `title`/`episode`/`number` | `framework/contracts/contract-source.md#L267-L286@matchedBy` |
-| 版本标签：flag + 结构化字段 | — | `line.flag` 单段稳定标识；`versionLabel` 由面板写；撞名靠 `sizeBytes`/`height`/`videoCodec` 区分 | `framework/contracts/contract-source.md#L288-L312@版本标签` |
+| 直绑元数据域条目 Id `binds` | `detail({ id: entryId })`（面板按域名解出 entryId 原样传入） | 声明在 `plugin.json.binds`；先直绑 → 失败回落按名搜（契约义务）；出参回 `detail.vod_id`（面板不解释、原样记 ProviderIds）；多插件同域都试 | `framework/contracts/contract-source.md#L159-L197@binds` |
+| 组名渲染 | — | `sources[].name · sites[].name`（`·` 只由渲染层插入） | `framework/contracts/contract-source.md#L214-L236@组名` |
+| 搜索候选 `search` | 实例 + 站点 key + 搜索词/页码/超时 | `json.list[]`：`vod_id` `vod_name` `vod_pic` `vod_remarks`（+可选 `vod_exact`）；`vod_name` 必须是干净片名主干 | `framework/contracts/contract-source.md#L249-L275@vod_name` |
+| 详情 `detail`（按季集定位） | `{…, season, episode, pick?}` | 剧集：`episodes[]`(全集) + `target`(按季集定位项，定位不到 `null`)；电影：`pick:'items'`→`items[]`，`target=items[0]`；直绑时须回资源级 `vod_id` | `framework/contracts/contract-source.md#L277-L307@必须回全集` |
+| 三级定位规则 | — | 命中依据写入 `target.matchedBy` ∈ `title`/`episode`/`number` | `framework/contracts/contract-source.md#L309-L328@matchedBy` |
+| 版本标签：flag + 结构化字段 | — | `line.flag` 单段稳定标识；`versionLabel` 由面板写；撞名靠 `sizeBytes`/`height`/`videoCodec` 区分 | `framework/contracts/contract-source.md#L330-L354@版本标签` |
 | 播放项规格 + `playVia` + `ref` | — | `playVia:'client'`(缺省)/`'proxy'`；`ref` = `<插件id>/<自定>`（面板只按第一段路由）；规格 `container` `sizeBytes` `width` `height` `videoCodec` `videoProfile` `bitDepth` `frameRate` `videoRange` `audioCodec` `channelLayout` `channels` `atmos` `bitRate`（假值 0/false/空串=没给） | `framework/contracts/contract-source.md#L51-L93@playVia` |
-| 发版前自检清单 | — | 7 项（target / matchedBy / episodeCount / targetNote / items / flag / ref） | `framework/contracts/contract-source.md#L314-L327@自检清单` |
+| 发版前自检清单 | — | 7 项（target / matchedBy / episodeCount / targetNote / items / flag / ref） | `framework/contracts/contract-source.md#L356-L369@自检清单` |
 
 ---
 
@@ -129,7 +132,7 @@
 | `subtitle`（`tracks`/`fetch`） | 裸值式：**只能 `throw`**（回 `{ok:false}` 会被当「成功但没内容」） |
 | `output`（`http`） | 看返回体 `{status, body}`（`status` 缺省 200），用 `status` 表失败，不靠抛 |
 
-出处：`framework/contracts/plugin-contract.md#L370-L388@必须 throw`
+出处：`framework/contracts/plugin-contract.md#L418-L436@必须 throw`
 
 ---
 

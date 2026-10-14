@@ -24,6 +24,7 @@
     - 版本号两处一致：`framework/framework.json`（权威）+ 根 `VERSION`；改版本一律走 `node framework/tools/version.js [patch|minor|major]`，不手改。
     - **所有者**：`git config core.hooksPath framework/hooks` 启用钩子后，推 main 时若待推提交没改版本号 → 自动升 patch、连 CHANGELOG「未发布」（有内容则落版本号+日期）新提一个 commit，需重新 push 一次；minor/major 手动先升。
     - **开发者**：每次插件开发开工先跑 `node framework/tools/update.js --check`，有新版经用户同意后 `update.js`（只覆盖 `framework/` 与 SKILL.md，不碰 `plugins/`）。旧到没有该工具的，`curl …/init.js | node - --upgrade`。
+14. **动插件必核对「可选申报」，缺了当场提醒（铁律）**：**新建 / 修改 / 评审 / 打包任何插件**时，主动对照该插件的**可选**字段 / 可选动作清单（见 `plugin-contract.md` §一「可选能力的申报」+ 各类型契约），**插件有能力却没申报的，当场向用户点名提醒**（例：`home` 插件未申报任何 `feed` ⇒ 客户端推荐位 / 轮播恒空；`metadata` 未给 `genreItems` ⇒ 类型那栏不可点）。**提醒 ≠ 强制**：确属没能力就如实留空；**严禁为凑满可选字段编数据**（呼应契约第一条铁律）。
 
 ## 事实来源
 
