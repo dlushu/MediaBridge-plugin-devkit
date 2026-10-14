@@ -42,10 +42,28 @@
 各类型的可选项见各自契约文档：`home` 的 `feed`/`total`/`episodes`、`metadata` 的 `genreItems`/`links`、
 `subtitle` 的多语言轨 / `label`、`source` 的 `directLines`/`vod_exact`/`binds`、通用的 `updateUrl`/`ingress` 等。
 
-### 面板代取图片（`/api/emby/img/…`）
+### 封面地址只允许三种形态
 
 图片字段（`metadata` 的 `posterPath`/`backdropPath`、`source` 的 `vod_pic`、`home` 的 `item.poster`）
-除**绝对 URL** 外，还可以给**根相对**的这个形态 —— 那是在说「**这张图请面板代取**」：
+**必须**是下面三种之一，**没有第四种**。面板按形态分派，不做任何猜测：
+
+| 形态 | 插件怎么写 | 面板做什么 | 谁取字节 |
+|---|---|---|---|
+| **A 图床直链** | 完整 `https://…/x.jpg` | 原样 302 | 客户端 |
+| **B 面板代取** | `/api/emby/img/{host}/{path}`（可选 `mbh` 头） | 补签名、补自己这一跳的绝对地址 → 302 | 面板（带插件申报的 Referer/UA） |
+| **C 图床相对路径** | `/x.jpg`（配合 `register` 申报的 `imageBase`，见元数据契约） | 按 `imageBase + size + path` 拼成完整地址 → 走 A | 客户端 |
+
+三条**硬律**（踩过一次坑，别再来）：
+
+1. **只有 `/api/emby/img/` 这一个前缀算「面板代取」**。别指望"以 `/` 开头"就等于代取 ——
+   C 形态（TMDB 的 `poster_path` 就长这样）也以 `/` 开头，面板把它当中继就会产出
+   **客户端取不到的地址**（面板自己也不提供该路径），客户端改写后整片 501。
+2. **不要自己拼面板的地址**：`http://<面板实例>/xxx.jpg` 这类"看着像面板"的地址一律不要写。
+   面板只在自己的 `/api/emby/` 前缀下提供端点，而客户端**只在这个前缀下发请求**。
+3. **要面板代取就用 B 的形态表达**（那是唯一的表达方式）；**能裸取就给 A**；
+   **图床有基地址就给 C + `imageBase`**。
+
+#### B 形态的细节（`/api/emby/img/…`）
 
 ```
 /api/emby/img/{host}/{path}?{上游自己的 query}&mbh={头}

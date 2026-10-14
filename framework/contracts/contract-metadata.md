@@ -67,6 +67,20 @@
 - 只放**能从条目编号推出来**的链接（例如站点自己的条目页）。
   需要额外号码的（如 IMDb 的 `tt` 号）走"取元数据"的外部 id，不在这里拼。
 
+### 图片基地址申报（`imageBase`）
+
+`注册` 可带 `imageBase`：这个域**图床的基地址**（字符串，如 `https://image.tmdb.org/t/p`）。
+
+- 条目里的 `posterPath` / `backdropPath` 是**图床相对路径**时（TMDB 的 `poster_path` 就长这样：`/abc.jpg`），
+  面板按 `imageBase + '/' + size + path` 拼成完整地址再交给客户端；`size` 由**面板**按用途选
+  （海报 `w500`、背景 `w780`、剧照 `w300`、头像 `w185`），插件不用管。
+- **也可以不用它**：`posterPath` / `backdropPath` 直接给完整 `https://…` 地址即可。两种都合法，
+  `imageBase` 只是省掉"每条重复写同一段前缀"。**面板只认这两种**（相对路径 + `imageBase`，或完整 URL）。
+- ⚠️ **`imageBase` 只写图床**，**不许**写面板自己的地址 / 实例端口（`http://<面板>:8092/…`）——
+  那会让面板把"图床的路径"当成"自己的路径"，产出**客户端取不到**的地址（表现是整库封面报错）。
+- ⚠️ 给了相对路径却**没**申报 `imageBase`：面板拼不出来，如实当"这条没有图"（不猜、不兜底）。
+- 图床**要 Referer** 的：不要用 `imageBase`，改用总契约的「**B 面板代取形态**」（`/api/emby/img/…`）。
+
 ⚠️ **不属于插件、不要塞进来**：图片的**代取与签名**（面板为客户端取图，见
 [ADR-0013](https://github.com/dlushu/media-bridge-panel/blob/main/docs/adr/0013-image-endpoint-signing.md)）、各类缓存（各自管各自的，见总契约第八节）、
 Emby 的 DTO 形状（面板负责转换，见 [ADR-0007](https://github.com/dlushu/media-bridge-panel/blob/main/docs/adr/0007-emby-dto-shape.md)）。

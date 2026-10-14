@@ -274,6 +274,8 @@ sources[].name · sites[].name        // 例：PikPak 磁力 · BTSearch 磁力
 
 写体积 / 做种或热度（`33.15 GB · H:35`），**不写广告词**。封面给不出就留空串，不要编。
 
+封面（`vod_pic`）按总契约的三种形态给：完整 http(s) URL、面板代取 `/api/emby/img/{host}/{path}`、或"图床相对路径 + 该域申报的 `imageBase`"（见元数据契约的「图片基地址申报」）。**不要**写面板自己的实例地址。
+
 ### 详情必须按季集定位（`detail`）
 
 面板**不做定位**，只把客户端请求的 `season` / `episode` 原样转进 `detail`。

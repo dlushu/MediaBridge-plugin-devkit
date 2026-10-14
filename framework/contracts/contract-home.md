@@ -164,15 +164,15 @@
 | `year` | — | 数字；`0` 或非法丢弃 |
 | `overview` | — | 简介 |
 | `rating` | — | 数字；`0` 或非法丢弃 |
-| `poster` | — | 完整 http(s) URL |
-| `backdrop` | — | 完整 http(s) URL，横图 |
+| `poster` | — | 完整 http(s) URL，**或**面板代取形态 `/api/emby/img/{host}/{path}`（见总契约「封面地址只允许三种形态」） |
+| `backdrop` | — | 同上（横图） |
 | `genres` | — | 字符串数组（最多 20 个） |
 | `providerIds` | — | 对象，如 `{ <域>: "<编号>" }` |
 | `sourceLoc` | — | 可播放定位 `{ source?, site, vodId }`：`source` 是 `源插件id/实例id`（缺省由面板按站点补），output 插件拿它走聚合详情/播放 |
 
 丢字段的规矩：
 
-- 规范外的字段**一律丢掉**（含 `poster` / `backdrop` 不是 http(s) URL 的情况）；
+- 规范外的字段**一律丢掉**（含 `poster` / `backdrop` 既不是完整 http(s) URL、也不是 `/api/emby/img/…` 代取形态的情况 —— 首页行没有"域"可查 `imageBase`，**图床相对路径会被丢掉**：要图就按上面两种形态给）；
 - 缺 `id` / `title`、或 `type` 不是 `movie` / `tv` 的条目**直接丢**；
 - 单行内 `id` 重复只留第一条；每行最多留 200 条，超出与丢弃都计数。
 
