@@ -72,7 +72,7 @@
 | 详情 `detail`（按季集定位） | `{…, season, episode, pick?}` | 剧集：`episodes[]`(全集) + `target`(按季集定位项，定位不到 `null`)；电影：`pick:'items'`→`items[]`，`target=items[0]`；直绑时须回资源级 `vod_id` | `framework/contracts/contract-source.md#L277-L307@必须回全集` |
 | 三级定位规则 | — | 命中依据写入 `target.matchedBy` ∈ `title`/`episode`/`number` | `framework/contracts/contract-source.md#L309-L328@matchedBy` |
 | 版本标签：flag + 结构化字段 | — | `line.flag` 单段稳定标识；`versionLabel` 由面板写；撞名靠 `sizeBytes`/`height`/`videoCodec` 区分 | `framework/contracts/contract-source.md#L330-L354@版本标签` |
-| 播放项规格 + `playVia` + `ref` | — | `playVia:'client'`(缺省)/`'proxy'`；`ref` = `<插件id>/<自定>`（面板只按第一段路由）；规格 `container` `sizeBytes` `width` `height` `videoCodec` `videoProfile` `bitDepth` `frameRate` `videoRange` `audioCodec` `channelLayout` `channels` `atmos` `bitRate`（假值 0/false/空串=没给） | `framework/contracts/contract-source.md#L51-L93@playVia` |
+| 播放项规格 + `playVia` + `ref` | — | `playVia:'client'`(缺省，地址客户端能直接用)/`'proxy'`（**地址客户端拿不到**：① 缺鉴权头 ② 只有面板够得着如回环/进程内本地服务，此时 `header` 可为空；这类地址**不得外转第三方中继**）；`ref` = `<插件id>/<自定>`（面板只按第一段路由）；规格 `container` `sizeBytes` `width` `height` `videoCodec` `videoProfile` `bitDepth` `frameRate` `videoRange` `audioCodec` `channelLayout` `channels` `atmos` `bitRate`（假值 0/false/空串=没给） | `framework/contracts/contract-source.md#L51-L99@playVia` |
 | 发版前自检清单 | — | 7 项（target / matchedBy / episodeCount / targetNote / items / flag / ref） | `framework/contracts/contract-source.md#L356-L369@自检清单` |
 
 ---
